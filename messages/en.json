@@ -1,0 +1,54 @@
+{
+  "nav": {
+    "home": "Home",
+    "aiAssistant": "AI Assistant",
+    "specialists": "Specialists",
+    "blog": "Blog",
+    "login": "Login",
+    "dashboard": "Dashboard",
+    "logout": "Logout"
+  },
+  "hero": {
+    "title": "Your Path to Mental Health",
+    "subtitle": "Professional support, anonymity and care in one place",
+    "startButton": "Start",
+    "aiAssistantButton": "AI Assistant"
+  },
+  "features": {
+    "aiAssistant": {
+      "title": "AI Assistant",
+      "description": "Get instant emotional support from our AI assistant"
+    },
+    "licensedSpecialists": {
+      "title": "Licensed Specialists",
+      "description": "Connect with verified psychologists and psychiatrists"
+    },
+    "community": {
+      "title": "Community",
+      "description": "Share experiences anonymously and read stories from others"
+    },
+    "smartMatching": {
+      "title": "Smart Matching",
+      "description": "AI will find the right specialist for you"
+    },
+    "anonymity": {
+      "title": "Anonymity",
+      "description": "Full confidentiality of your data"
+    },
+    "multilingualism": {
+      "title": "Multilingualism",
+      "description": "Interface in Russian and Kazakh"
+    }
+  }
+}
+
+
+
+
+
+
+
+
+
+
+

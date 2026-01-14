@@ -1,0 +1,227 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  SPECIALIST
+  ADMIN
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+enum CertificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum ChatSessionStatus {
+  ACTIVE
+  CLOSED
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  password      String?
+  name          String?
+  role          UserRole @default(USER)
+  profilePhoto  String?
+  description   String?  @db.Text
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  specialist    Specialist?
+  appointments  Appointment[]
+  reviews       Review[]
+  chatSessions  ChatSession[]
+  experiencePosts ExperiencePost[]
+  assessments   Assessment[]
+
+  @@map("users")
+}
+
+model Specialist {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  biography   String?  @db.Text
+  specialization String?
+  experience  Int?     @default(0)
+  pricePerHour Float?  @default(0)
+  isAvailable Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  certifications Certification[]
+  appointments   Appointment[]
+  reviews        Review[]
+  chatSessions   ChatSession[]
+  blogPosts      BlogPost[]
+  availabilities Availability[]
+  experiencePostResponses ExperiencePostResponse[]
+
+  @@map("specialists")
+}
+
+model Certification {
+  id          String              @id @default(cuid())
+  specialistId String
+  specialist  Specialist          @relation(fields: [specialistId], references: [id], onDelete: Cascade)
+  title       String
+  institution String
+  fileUrl     String
+  status      CertificationStatus @default(PENDING)
+  verifiedAt  DateTime?
+  verifiedBy  String?
+  createdAt   DateTime            @default(now())
+
+  @@map("certifications")
+}
+
+model Availability {
+  id           String   @id @default(cuid())
+  specialistId String
+  specialist   Specialist @relation(fields: [specialistId], references: [id], onDelete: Cascade)
+  dayOfWeek    Int      // 0 = Sunday, 1 = Monday, etc.
+  startTime    String   // HH:mm format
+  endTime      String   // HH:mm format
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("availabilities")
+}
+
+model Appointment {
+  id            String            @id @default(cuid())
+  userId        String
+  user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  specialistId  String
+  specialist    Specialist        @relation(fields: [specialistId], references: [id], onDelete: Cascade)
+  date          DateTime
+  duration      Int               @default(60) // in minutes
+  status        AppointmentStatus @default(PENDING)
+  notes         String?           @db.Text
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@map("appointments")
+}
+
+model Review {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  specialistId String
+  specialist   Specialist @relation(fields: [specialistId], references: [id], onDelete: Cascade)
+  rating       Int      // 1-5
+  comment      String?  @db.Text
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("reviews")
+}
+
+model BlogPost {
+  id           String   @id @default(cuid())
+  specialistId String
+  specialist   Specialist @relation(fields: [specialistId], references: [id], onDelete: Cascade)
+  title        String
+  slug         String   @unique
+  content      String   @db.Text
+  excerpt      String?
+  imageUrl     String?
+  published    Boolean  @default(false)
+  publishedAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("blog_posts")
+}
+
+model ExperiencePost {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  content   String   @db.Text
+  published Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  responses ExperiencePostResponse[]
+  chatSessions ChatSession[]
+
+  @@map("experience_posts")
+}
+
+model ChatSession {
+  id             String            @id @default(cuid())
+  userId         String
+  user           User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  specialistId   String?
+  specialist     Specialist?       @relation(fields: [specialistId], references: [id], onDelete: SetNull)
+  anonymousUserId String?          // Anonymous identifier shown to specialists (e.g., "User #1234")
+  experiencePostId String?        // Link to experience post if chat was initiated from a post
+  status         ChatSessionStatus @default(ACTIVE)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  messages       Message[]
+  experiencePost ExperiencePost?   @relation(fields: [experiencePostId], references: [id], onDelete: SetNull)
+
+  @@map("chat_sessions")
+}
+
+model Message {
+  id            String      @id @default(cuid())
+  sessionId     String
+  session       ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  senderId      String?
+  senderRole    String      // "user" or "specialist"
+  content       String      @db.Text
+  createdAt     DateTime    @default(now())
+
+  @@map("messages")
+}
+
+model Assessment {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  data      Json     // Store assessment responses and scores
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("assessments")
+}
+
+model ExperiencePostResponse {
+  id             String   @id @default(cuid())
+  experiencePostId String
+  experiencePost ExperiencePost @relation(fields: [experiencePostId], references: [id], onDelete: Cascade)
+  specialistId   String
+  specialist     Specialist @relation(fields: [specialistId], references: [id], onDelete: Cascade)
+  content        String   @db.Text
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("experience_post_responses")
+}
+
